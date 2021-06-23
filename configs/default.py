@@ -44,7 +44,7 @@ class DefaultConfig:
 
     # EPSILON
     eps_start = 1.0
-    eps_end = 0.01
+    eps_end = 0.01  # per machado suggestion
     eps_steps = 1_000_000
 
     # LEARNING RATE
