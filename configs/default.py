@@ -37,7 +37,7 @@ class DefaultConfig:
 
     # TRAINING
     nsteps_train = 200_000_000
-    learning_start = 5_000  # 50_000
+    learning_start = 50_000  # 50_000
     learning_freq = 4
     gamma = 0.99
     target_update_freq = 10_000
