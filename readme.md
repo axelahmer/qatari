@@ -18,7 +18,7 @@ Tensorboard output logged to:
 
 To view results live run tensorboard:
 
-`tensorboard --logdir=./results/<game>`
+`tensorboard --logdir='./results/<game>'`
 
 Notes:
 
