@@ -3,6 +3,9 @@ class DefaultConfig:
     display = True  # display game and max q plot
     # device = 'cuda:0'  # what device to do learning updates with
 
+    # NETWORK ARCHITECTURE
+    qnet = 'summer'  # 'nature', 'summer'
+
     # ENVIRONMENT
     seed = 123
     mode = 0
@@ -27,7 +30,7 @@ class DefaultConfig:
     rms_prop_eps = 0.1 / 32.0
 
     # LOGGING AND SAVING
-    logging_freq = 1000  # steps
+    logging_freq = 10_000  # steps
     save_param_freq = 500_000
 
     # REPLAY BUFFER
@@ -36,7 +39,7 @@ class DefaultConfig:
     batch_size = 32
 
     # TRAINING
-    nsteps_train = 200_000_000
+    nsteps_train = 200_000_000 # 200_000_000
     learning_start = 50_000  # 50_000
     learning_freq = 4
     gamma = 0.99
@@ -44,7 +47,7 @@ class DefaultConfig:
 
     # EPSILON
     eps_start = 1.0
-    eps_end = 0.01  # per machado suggestion
+    eps_end = 0.01
     eps_steps = 1_000_000
 
     # LEARNING RATE

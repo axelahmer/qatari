@@ -4,27 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-
-
-class NetDQN(nn.Module):
-
-    def __init__(self, in_channels, num_actions):
-        super().__init__()
-        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=8, stride=4)
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
-        self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
-        self.fc1 = nn.Linear(in_features=7 * 7 * 64, out_features=512)
-        self.fc2 = nn.Linear(in_features=512, out_features=num_actions)
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.relu(self.conv2(x))
-        x = self.relu(self.conv3(x))
-        x = x.flatten(1)
-        x = self.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+from modules.nature import NatureNet
+from modules.summer import SummerNet
 
 
 class DQNLearner(QLearner):
@@ -41,8 +22,16 @@ class DQNLearner(QLearner):
         # build networks
         in_channels = self.env.observation_space.shape[-1] * self.config.frame_history_len
         out_channels = self.env.action_space.n
-        self.q_network = NetDQN(in_channels, out_channels).to(self.device)
-        self.target_network = NetDQN(in_channels, out_channels).to(self.device)
+
+        if self.config.qnet == 'nature':
+            net = NatureNet
+        elif self.config.qnet == 'summer':
+            net = SummerNet
+        else:
+            print('q network incorrectly specified')
+
+        self.q_network = net(in_channels, out_channels).to(self.device)
+        self.target_network = net(in_channels, out_channels).to(self.device)
 
         # randomly initialize weights and zero biases
         def init_weights(m):
@@ -50,7 +39,6 @@ class DQNLearner(QLearner):
                 nn.init.xavier_uniform_(m.weight, gain=2 ** (1. / 2))
             if hasattr(m, 'bias'):
                 nn.init.zeros_(m.bias)
-
         self.q_network.apply(init_weights)
 
         # copy q network params to target network
@@ -71,6 +59,8 @@ class DQNLearner(QLearner):
                                                  weight_decay=0,
                                                  momentum=0,
                                                  centered=True)
+        else:
+            print('optimizer incorrectly specified')
 
         print(f'Model on device {self.device}')
 
@@ -150,7 +140,7 @@ if __name__ == '__main__':
     from configs.default import DefaultConfig
 
     # build model
-    model = DQNLearner(game='seaquest', config=DefaultConfig())
+    model = DQNLearner(game='space_invaders', config=DefaultConfig())
 
     # run model
     model.run()
