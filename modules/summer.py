@@ -11,7 +11,7 @@ class SummerNet(nn.Module):
     def __init__(self, in_channels, num_actions):
         super().__init__()
         self.net1 = nn.Conv2d(in_channels, 32, kernel_size=7, stride=7)
-        self.net2 = nn.Conv2d(32, 64, kernel_size=4, stride=4)
+        self.net2 = nn.Conv2d(32, 64, kernel_size=3, stride=3)
         self.nin1 = nn.Conv2d(64, 32, kernel_size=1, stride=1)
         self.nin2 = nn.Conv2d(32, num_actions, kernel_size=1, stride=1)
         self.act = nn.ReLU()
