@@ -32,7 +32,7 @@ class QLearner:
 
         # init. tensorboard writer
         run_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.log_dir = f'results/{self.game}/{run_time}_seed{self.config.seed}'
+        self.log_dir = f'results/{self.game}/{self.config.qnet}_{self.config.seed}_{run_time}'
         self.writer = SummaryWriter(log_dir=self.log_dir, max_queue=100)
 
     # ABSTRACT METHOD
