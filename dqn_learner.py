@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 from modules.nature import NatureNet
 from modules.summer import SummerNet
+from modules.qmixer import MixerNet
 
 
 class DQNLearner(QLearner):
@@ -27,6 +28,8 @@ class DQNLearner(QLearner):
             net = NatureNet
         elif self.config.qnet == 'summer':
             net = SummerNet
+        elif self.config.qnet == 'mixer':
+            net = MixerNet
         else:
             print('q network incorrectly specified')
 
