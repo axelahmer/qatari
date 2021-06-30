@@ -29,6 +29,7 @@ class QLearner:
         run_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.log_dir = f'results/{self.config.game}/{self.config.qnet}_{self.config.seed}_{run_time}'
         self.writer = SummaryWriter(log_dir=self.log_dir, max_queue=100)
+        self.writer.add_text('config_info', str(self.config.__dict__))
 
     # ABSTRACT METHOD
     def get_greedy_action(self, q_input):

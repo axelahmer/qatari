@@ -10,6 +10,8 @@ class DQNLearner(QLearner):
     def __init__(self, config=None):
         super().__init__(config=config)
 
+        self.logged_graph = False
+
         if hasattr(config, 'device'):
             self.device = config.device
         else:
@@ -94,6 +96,11 @@ class DQNLearner(QLearner):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+        # log graph if not already done
+        if self.logged_graph is False:
+            self.writer.add_graph(self.q_network, s)
+            self.logged_graph = True
 
         return loss.item()
 
