@@ -97,6 +97,9 @@ class DQNLearner(QLearner):
         sp_batch = torch.tensor(sp_batch, dtype=torch.uint8, device=self.device)
         done_mask_batch = torch.tensor(done_mask_batch, dtype=torch.bool, device=self.device)
 
+        # clip rewards
+        r_batch.clip_(min=-1., max=1.)
+
         # process state batches on device
         s = self.process_state(s_batch)
         sp = self.process_state(sp_batch)
