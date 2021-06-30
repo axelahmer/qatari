@@ -20,7 +20,7 @@ if __name__ == '__main__':
             print('unrecognized argument.\n\nexpected: "python main.py game=GAME_NAME qnet=MODULE_NAME config=CONFIG_NAME"')
 
     if config is None:
-        config = config_dict['default']()
+        config = config_dict['machado']()
 
     # overwrite config attributes
     if game is not None:
