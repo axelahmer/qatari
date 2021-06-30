@@ -26,13 +26,14 @@ class DQNLearner(QLearner):
         self.q_network = network(in_channels, out_channels).to(self.device)
         self.target_network = network(in_channels, out_channels).to(self.device)
 
+        # NOTE: pytorch initialization is good enough!
         # randomly initialize weights and zero biases
-        def init_weights(m):
-            if hasattr(m, 'weight'):
-                nn.init.xavier_uniform_(m.weight, gain=2 ** (1. / 2))
-            if hasattr(m, 'bias'):
-                nn.init.zeros_(m.bias)
-        self.q_network.apply(init_weights)
+        # def init_weights(m):
+        #     if hasattr(m, 'weight'):
+        #         nn.init.xavier_uniform_(m.weight, gain=2 ** (1. / 2))
+        #     if hasattr(m, 'bias'):
+        #         nn.init.zeros_(m.bias)
+        # self.q_network.apply(init_weights)
 
         # copy q network params to target network
         self.update_target_params()
