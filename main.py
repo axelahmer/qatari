@@ -12,7 +12,7 @@ if __name__ == '__main__':
         if arg_name == 'game':
             game = arg_val
         elif arg_name == 'config':
-            config = config_dict[arg_val]
+            config = config_dict[arg_val]()
         else:
             print('unrecognized argument. expected: "python main.py game=____ config=_____"')
 
