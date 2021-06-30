@@ -7,8 +7,8 @@ from modules import module_dict
 
 
 class DQNLearner(QLearner):
-    def __init__(self, game=None, config=None):
-        super().__init__(game=game, config=config)
+    def __init__(self, config=None):
+        super().__init__(config=config)
 
         if hasattr(config, 'device'):
             self.device = config.device
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     from configs.default import DefaultConfig
 
     # build model
-    model = DQNLearner(game='space_invaders', config=DefaultConfig())
+    model = DQNLearner(config=DefaultConfig())
 
     # run model
     model.run()

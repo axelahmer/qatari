@@ -4,9 +4,10 @@ class DefaultConfig:
     # device = 'cuda:0'  # what device to do learning updates with
 
     # NETWORK ARCHITECTURE
-    qnet = 'summer'  # 'nature', 'summer'
+    qnet = 'mixer'  # 'nature', 'summer', 'mixer
 
     # ENVIRONMENT
+    game = 'pong'
     seed = 123
     mode = 0
     difficulty = 0

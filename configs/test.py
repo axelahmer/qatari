@@ -7,6 +7,7 @@ class TestConfig:
     qnet = 'nature'  # 'nature', 'summer', 'mixer
 
     # ENVIRONMENT
+    game = 'seaquest'
     seed = 123
     mode = 0
     difficulty = 0

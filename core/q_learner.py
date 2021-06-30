@@ -14,12 +14,7 @@ from configs.default import DefaultConfig
 
 class QLearner:
 
-    def __init__(self, game=None, config=None):
-
-        if game is None:
-            self.game = 'pong'
-        else:
-            self.game = game
+    def __init__(self, config=None):
 
         if config is None:
             self.config = DefaultConfig()
@@ -32,7 +27,7 @@ class QLearner:
 
         # init. tensorboard writer
         run_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.log_dir = f'results/{self.game}/{self.config.qnet}_{self.config.seed}_{run_time}'
+        self.log_dir = f'results/{self.config.game}/{self.config.qnet}_{self.config.seed}_{run_time}'
         self.writer = SummaryWriter(log_dir=self.log_dir, max_queue=100)
 
     # ABSTRACT METHOD
@@ -47,7 +42,7 @@ class QLearner:
         # create environment following Machado et al. 2018
 
         env = AtariEnv(
-            game=self.game,
+            game=self.config.game,
             mode=self.config.mode,
             difficulty=self.config.difficulty,
             obs_type='image',
