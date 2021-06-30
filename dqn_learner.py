@@ -4,9 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from modules.nature import NatureNet
-from modules.summer import SummerNet
-from modules.qmixer import MixerNet
+from modules import module_dict
 
 
 class DQNLearner(QLearner):
@@ -24,17 +22,9 @@ class DQNLearner(QLearner):
         in_channels = self.env.observation_space.shape[-1] * self.config.frame_history_len
         out_channels = self.env.action_space.n
 
-        if self.config.qnet == 'nature':
-            net = NatureNet
-        elif self.config.qnet == 'summer':
-            net = SummerNet
-        elif self.config.qnet == 'mixer':
-            net = MixerNet
-        else:
-            print('q network incorrectly specified')
-
-        self.q_network = net(in_channels, out_channels).to(self.device)
-        self.target_network = net(in_channels, out_channels).to(self.device)
+        network = module_dict[self.config.qnet]
+        self.q_network = network(in_channels, out_channels).to(self.device)
+        self.target_network = network(in_channels, out_channels).to(self.device)
 
         # randomly initialize weights and zero biases
         def init_weights(m):
