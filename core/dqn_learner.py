@@ -1,7 +1,6 @@
 from collections import deque
-from q_learner import QLearner
+from core.q_learner import QLearner
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from modules import module_dict
