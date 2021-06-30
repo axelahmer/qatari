@@ -52,7 +52,7 @@ class QLearner:
         )
 
         env = AtariPreprocessing(
-            env=env,  # sticky action p=0.25
+            env=env,
             noop_max=self.config.noop_max,
             frame_skip=self.config.frame_skip,
             screen_size=84,
@@ -188,7 +188,6 @@ class QLearner:
                 break
 
     def run(self):
-
         self.train()
 
     def get_eps_greedy_action(self, greedy_action, epsilon):

@@ -1,52 +1,54 @@
 class TestConfig:
-    debug = True  # whether to print state and observation images to tensorboard
-    display = True  # display game and max q plot
-    # device = 'cuda:0'  # what device to do learning updates with
 
-    # NETWORK ARCHITECTURE
-    qnet = 'nature'  # 'nature', 'summer', 'mixer
+    def __init__(self):
+        self.debug = True  # whether to print state and observation images to tensorboard
+        self.display = True  # display game and max q plot
+        # self.device = 'cuda:0'  # what device to do learning updates with
 
-    # ENVIRONMENT
-    game = 'seaquest'
-    seed = 123
-    mode = 0
-    difficulty = 0
-    frame_skip = 4
-    repeat_action_probability = 0.25
-    full_action_space = True
-    noop_max = 0
-    terminal_on_life_loss = True
+        # NETWORK ARCHITECTURE
+        self.qnet = 'nature'  # 'nature', 'summer', 'mixer'
 
-    # OPTIMIZER
-    optimizer = 'adam'  # 'adam', 'rms_prop'
+        # ENVIRONMENT
+        self.game = 'pong'
+        self.seed = 123
+        self.mode = 0
+        self.difficulty = 0
+        self.frame_skip = 4
+        self.repeat_action_probability = 0.25
+        self.full_action_space = True
+        self.noop_max = 0
+        self.terminal_on_life_loss = True
 
-    adam_lr = 0.0000625
-    adam_beta1 = 0.9
-    adam_beta2 = 0.999
-    adam_eps = 0.00015
-    adam_weight_decay = 0
+        # OPTIMIZER
+        self.optimizer = 'adam'  # 'adam', 'rms_prop'
 
-    rms_prop_lr = 0.00025
-    rms_prop_alpha = 0.95
-    rms_prop_eps = 0.1 / 32.0
+        self.adam_lr = 0.0000625
+        self.adam_beta1 = 0.9
+        self.adam_beta2 = 0.999
+        self.adam_eps = 0.00015
+        self.adam_weight_decay = 0
 
-    # LOGGING AND SAVING
-    logging_freq = 10_000  # steps
-    save_param_freq = 500_000
+        self.rms_prop_lr = 0.00025
+        self.rms_prop_alpha = 0.95
+        self.rms_prop_eps = 0.1 / 32.0
 
-    # REPLAY BUFFER
-    buffer_size = 1_000_000  # 1_000_000
-    frame_history_len = 4
-    batch_size = 32
+        # LOGGING AND SAVING
+        self.logging_freq = 10_000  # steps
+        self.save_param_freq = 500_000
 
-    # TRAINING
-    nsteps_train = 10_000_000 # 200_000_000
-    learning_start = 5_000  # 50_000
-    learning_freq = 4
-    gamma = 0.99
-    target_update_freq = 10_000
+        # REPLAY BUFFER
+        self.buffer_size = 1_000_000  # 1_000_000
+        self.frame_history_len = 4
+        self.batch_size = 32
 
-    # EPSILON
-    eps_start = 1.0
-    eps_end = 0.01
-    eps_steps = 1_000_000
+        # TRAINING
+        self.nsteps_train = 10_000_000  # 200_000_000
+        self.learning_start = 5_000  # 50_000
+        self.learning_freq = 4
+        self.gamma = 0.99
+        self.target_update_freq = 10_000
+
+        # EPSILON
+        self.eps_start = 1.0
+        self.eps_end = 0.01
+        self.eps_steps = 1_000_000

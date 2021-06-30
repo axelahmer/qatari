@@ -17,11 +17,17 @@ if __name__ == '__main__':
         elif arg_name == 'config':
             config = config_dict[arg_val]()
         else:
-            print('unrecognized argument.\n\nexpected: "python main.py game=GAME_NAME module=MODULE_NAME config=CONFIG_NAME"')
+            print('unrecognized argument.\n\nexpected: "python main.py game=GAME_NAME qnet=MODULE_NAME config=CONFIG_NAME"')
+
+    if config is None:
+        config = config_dict['default']()
 
     # overwrite config attributes
-    config.game = game
-    config.qnet = qnet
+    if game is not None:
+        config.game = game
+
+    if qnet is not None:
+        config.qnet = qnet
 
     # load and run model
     model = DQNLearner(config)

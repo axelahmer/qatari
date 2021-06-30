@@ -1,4 +1,4 @@
-from collections import deque
+import sys
 from core.q_learner import QLearner
 import torch
 import torch.nn.functional as F
@@ -15,8 +15,6 @@ class DQNLearner(QLearner):
         else:
             self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
-        self.log_recent_losses = deque(maxlen=1000)
-
         # build networks
         in_channels = self.env.observation_space.shape[-1] * self.config.frame_history_len
         out_channels = self.env.action_space.n
@@ -25,37 +23,13 @@ class DQNLearner(QLearner):
         self.q_network = network(in_channels, out_channels).to(self.device)
         self.target_network = network(in_channels, out_channels).to(self.device)
 
-        # NOTE: pytorch initialization is good enough!
-        # randomly initialize weights and zero biases
-        # def init_weights(m):
-        #     if hasattr(m, 'weight'):
-        #         nn.init.xavier_uniform_(m.weight, gain=2 ** (1. / 2))
-        #     if hasattr(m, 'bias'):
-        #         nn.init.zeros_(m.bias)
-        # self.q_network.apply(init_weights)
-
         # copy q network params to target network
         self.update_target_params()
 
         # add optimizer
-        if self.config.optimizer == 'adam':
-            self.optimizer = torch.optim.Adam(params=self.q_network.parameters(),
-                                              lr=self.config.adam_lr,
-                                              betas=(self.config.adam_beta1, self.config.adam_beta2),
-                                              eps=self.config.adam_eps,
-                                              weight_decay=self.config.adam_weight_decay)
-        elif self.config.optimizer == 'rms_prop':
-            self.optimizer = torch.optim.RMSprop(params=self.q_network.parameters(),
-                                                 lr=self.config.rms_prop_lr,
-                                                 alpha=self.config.rms_prop_alpha,
-                                                 eps=self.config.rms_prop_eps,
-                                                 weight_decay=0,
-                                                 momentum=0,
-                                                 centered=True)
-        else:
-            print('optimizer incorrectly specified')
+        self.optimizer = self.make_optimizer()
 
-        print(f'Model on device {self.device}')
+        print(f'successfully built model on device: {self.device}\nconfig: {self.config.__dict__}')
 
     def get_greedy_action(self, state):
         with torch.no_grad():
@@ -130,6 +104,25 @@ class DQNLearner(QLearner):
     def process_state(state: torch.Tensor):
         # scale state and arrange axes for input to networks
         return (state / 255.0).permute(0, 3, 1, 2)
+
+    def make_optimizer(self):
+        if self.config.optimizer == 'adam':
+            return torch.optim.Adam(params=self.q_network.parameters(),
+                                    lr=self.config.adam_lr,
+                                    betas=(self.config.adam_beta1, self.config.adam_beta2),
+                                    eps=self.config.adam_eps,
+                                    weight_decay=self.config.adam_weight_decay)
+        elif self.config.optimizer == 'rms_prop':
+            return torch.optim.RMSprop(params=self.q_network.parameters(),
+                                       lr=self.config.rms_prop_lr,
+                                       alpha=self.config.rms_prop_alpha,
+                                       eps=self.config.rms_prop_eps,
+                                       weight_decay=0,
+                                       momentum=0,
+                                       centered=True)
+        else:
+            print('optimizer incorrectly specified')
+            sys.exit()
 
 
 if __name__ == '__main__':
