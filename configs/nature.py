@@ -1,7 +1,10 @@
-class TestConfig:
+class NatureConfig:
     """
-    configuration used for testing purposes.
+    configuration based on:
+
+    Mnih, V., et al. (2015). "Human-level control through deep reinforcement learning." nature 518(7540): 529-533.
     """
+
     def __init__(self):
         self.debug = True  # whether to print state and observation images to tensorboard
         self.display = True  # display game and max q plot
@@ -16,13 +19,14 @@ class TestConfig:
         self.mode = 0
         self.difficulty = 0
         self.frame_skip = 4
-        self.repeat_action_probability = 0.25
+        self.repeat_action_probability = 0.0
         self.full_action_space = True
-        self.noop_max = 0
-        self.terminal_on_life_loss = True
+        self.noop_max = 30
+        self.terminal_on_life_loss = False
+        self.max_episode_length = 18_000  # frames
 
         # OPTIMIZER
-        self.optimizer = 'adam'  # 'adam', 'rms_prop'
+        self.optimizer = 'rms_prop'  # 'adam', 'rms_prop'
 
         self.adam_lr = 0.0000625
         self.adam_beta1 = 0.9
@@ -44,8 +48,8 @@ class TestConfig:
         self.batch_size = 32
 
         # TRAINING
-        self.nsteps_train = 10_000_000  # 200_000_000
-        self.learning_start = 5_000  # 50_000
+        self.nsteps_train = 200_000_000 // self.frame_skip  # = 50_000_000 = 200_000_000 // 4
+        self.learning_start = 50_000  # 50_000
         self.learning_freq = 4
         self.gamma = 0.99
         self.target_update_freq = 10_000

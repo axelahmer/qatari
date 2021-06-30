@@ -9,7 +9,7 @@ from utils.preprocess_wrapper import AtariPreprocessing
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
-from configs.default import DefaultConfig
+from configs.machado import MachadoConfig
 
 
 class QLearner:
@@ -17,7 +17,8 @@ class QLearner:
     def __init__(self, config=None):
 
         if config is None:
-            self.config = DefaultConfig()
+            self.config = MachadoConfig()
+            print('Using default Machado Configuration')
         else:
             self.config = config
 
@@ -164,8 +165,8 @@ class QLearner:
                         self.writer.add_image('frame', frame, dataformats='HWC')
                         self.writer.add_images('state', np.expand_dims(state, 0), dataformats='CHWN')
 
-                # terminate episode if done
-                if done:
+                # terminate episode
+                if self.env.ale.game_over():
                     break
 
             # updates to perform at the end of an episode

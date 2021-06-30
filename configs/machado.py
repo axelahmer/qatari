@@ -1,4 +1,10 @@
-class DefaultConfig:
+class MachadoConfig:
+    """
+    configuration based on:
+
+    Machado, M. C., et al. (2018). "Revisiting the arcade learning environment: Evaluation protocols and open
+    problems for general agents." Journal of artificial intelligence research 61: 523-562.
+    """
 
     def __init__(self):
         self.debug = True  # whether to print state and observation images to tensorboard
@@ -13,14 +19,15 @@ class DefaultConfig:
         self.seed = 123
         self.mode = 0
         self.difficulty = 0
-        self.frame_skip = 4
+        self.frame_skip = 5
         self.repeat_action_probability = 0.25
         self.full_action_space = True
         self.noop_max = 0
         self.terminal_on_life_loss = False
+        self.max_episode_length = 18_000  # frames
 
         # OPTIMIZER
-        self.optimizer = 'adam'  # 'adam', 'rms_prop'
+        self.optimizer = 'rms_prop'  # 'adam', 'rms_prop'
 
         self.adam_lr = 0.0000625
         self.adam_beta1 = 0.9
@@ -42,7 +49,7 @@ class DefaultConfig:
         self.batch_size = 32
 
         # TRAINING
-        self.nsteps_train = 50_000_000  # 200_000_000
+        self.nsteps_train = 200_000_000 // self.frame_skip  # = 40_000_000 = 200_000_000 // 5
         self.learning_start = 50_000  # 50_000
         self.learning_freq = 4
         self.gamma = 0.99
