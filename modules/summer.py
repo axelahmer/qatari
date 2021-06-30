@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class SummerNet(nn.Module):
@@ -14,12 +15,11 @@ class SummerNet(nn.Module):
         self.net2 = nn.Conv2d(32, 64, kernel_size=3, stride=3)
         self.nin1 = nn.Conv2d(64, 32, kernel_size=1, stride=1)
         self.nin2 = nn.Conv2d(32, num_actions, kernel_size=1, stride=1)
-        self.act = nn.ReLU()
 
     def forward(self, x):
-        x = self.act(self.net1(x))
-        x = self.act(self.net2(x))
-        x = self.act(self.nin1(x))
+        x = F.relu(self.net1(x))
+        x = F.relu(self.net2(x))
+        x = F.relu(self.nin1(x))
         x = self.nin2(x)
         x = x.sum(-1).sum(-1) / 16.0
         return x

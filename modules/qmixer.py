@@ -1,7 +1,5 @@
-import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
 
 class MixerNet(nn.Module):
@@ -21,16 +19,15 @@ class MixerNet(nn.Module):
         self.nin2 = nn.Conv2d(32, num_actions, kernel_size=1, stride=1)
 
         self.q_weights = nn.Linear(in_features=64 * 7 * 7, out_features=7 * 7)
-        self.relu = nn.ReLU()
 
     def forward(self, state):
         # embed state
-        s = self.relu(self.conv1(state))
-        s = self.relu(self.conv2(s))
-        s = self.relu(self.conv3(s))
+        s = F.relu(self.conv1(state))
+        s = F.relu(self.conv2(s))
+        s = F.relu(self.conv3(s))
 
         # calc agent qs
-        qs = self.relu(self.nin1(s))
+        qs = F.relu(self.nin1(s))
         qs = self.nin2(qs).flatten(2).permute(0, 2, 1)  # N x 49 X A
 
         # calc weights
