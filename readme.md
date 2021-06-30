@@ -10,11 +10,15 @@ Install Atari ROMS: (available from the [Atari 2600 VCS ROM Collection](http://w
 
 Run an example simulation:
 
-`python dqn_learner.py`
+`python main.py`
+
+Run a specific game with specific config:
+
+`python main.py game=GAME_NAME config=CONFIG_NAME`
 
 Tensorboard output logged to:
 
-`./results/<game>/<timestamp>_seed<gameseed>`
+`./results/<game>/<module>_<gameseed>_<timestamp>`
 
 To view results live run tensorboard:
 

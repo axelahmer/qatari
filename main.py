@@ -1,5 +1,5 @@
 import sys
-from dqn_learner import DQNLearner
+from core.dqn_learner import DQNLearner
 from configs import config_dict
 
 if __name__ == '__main__':
