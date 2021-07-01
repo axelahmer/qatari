@@ -133,10 +133,9 @@ class DQNLearner(QLearner):
 
 
 if __name__ == '__main__':
-    from configs.nature import DefaultConfig
 
     # build model
-    model = DQNLearner(config=DefaultConfig())
+    model = DQNLearner()
 
     # run model
     model.run()
