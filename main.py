@@ -5,6 +5,7 @@ from configs import config_dict
 if __name__ == '__main__':
     game = None
     qnet = None
+    seed = None
     config = None
 
     # read arguments
@@ -14,10 +15,12 @@ if __name__ == '__main__':
             game = arg_val
         elif arg_name == 'qnet':
             qnet = arg_val
+        elif arg_name == 'seed':
+            seed = int(arg_val)
         elif arg_name == 'config':
             config = config_dict[arg_val]()
         else:
-            print('unrecognized argument.\n\nexpected: "python main.py game=GAME_NAME qnet=MODULE_NAME config=CONFIG_NAME"')
+            print('unrecognized argument.\n\nexpected: "python main.py game=GAME_NAME qnet=MODULE_NAME seed=SEED config=CONFIG_NAME"')
 
     if config is None:
         config = config_dict['machado']()
@@ -28,6 +31,9 @@ if __name__ == '__main__':
 
     if qnet is not None:
         config.qnet = qnet
+
+    if seed is not None:
+        config.seed = seed
 
     # load and run model
     model = DQNLearner(config)

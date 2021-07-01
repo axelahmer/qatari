@@ -12,9 +12,9 @@ Run an example simulation:
 
 `python main.py`
 
-Run a specific game with specific config:
+Run a specific game with specific config (other args overwrite the config):
 
-`python main.py game=GAME_NAME config=CONFIG_NAME`
+`python main.py game=GAME_NAME qnet=MODULE_NAME seed=SEED config=CONFIG_NAME`
 
 Tensorboard output logged to:
 
