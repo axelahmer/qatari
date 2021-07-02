@@ -23,7 +23,7 @@ class NatureConfig:
         self.full_action_space = True
         self.noop_max = 30
         self.terminal_on_life_loss = False
-        self.max_episode_length = 18_000  # frames
+        self.max_episode_length = 18_000 // self.frame_skip  # frames
 
         # OPTIMIZER
         self.optimizer = 'rms_prop'  # 'adam', 'rms_prop'

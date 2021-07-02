@@ -20,6 +20,7 @@ class TestConfig:
         self.full_action_space = True
         self.noop_max = 0
         self.terminal_on_life_loss = True
+        self.max_episode_length = 18000
 
         # OPTIMIZER
         self.optimizer = 'adam'  # 'adam', 'rms_prop'
@@ -35,7 +36,7 @@ class TestConfig:
         self.rms_prop_eps = 0.1 / 32.0
 
         # LOGGING AND SAVING
-        self.logging_freq = 10_000  # steps
+        self.logging_freq = 5_000  # steps
         self.save_param_freq = 500_000
 
         # REPLAY BUFFER

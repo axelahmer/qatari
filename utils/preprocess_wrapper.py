@@ -71,7 +71,6 @@ class AtariPreprocessing(gym.Wrapper):
 
         self.ale = env.unwrapped.ale
         self.lives = 0
-        self.game_over = False
         self.obs = None
 
         _low, _high, _obs_dtype = (0, 255, np.uint8) if not scale_obs else (0, 1, np.float32)
@@ -86,12 +85,17 @@ class AtariPreprocessing(gym.Wrapper):
         for t in range(self.frame_skip):
             _, reward, done, info = self.env.step(action)
             r += reward
-            self.game_over = done
+
+            # store game over in info
+            info['game_over'] = done
+
+            # store life loss in info
+            new_lives = self.ale.lives()
+            info['life_loss'] = done or new_lives < self.lives
+            self.lives = new_lives
 
             if self.terminal_on_life_loss:
-                new_lives = self.ale.lives()
-                done = done or new_lives < self.lives
-                self.lives = new_lives
+                done = info['life_loss']
 
             if done:
                 break
@@ -106,7 +110,7 @@ class AtariPreprocessing(gym.Wrapper):
                 else:
                     self.ale.getScreenRGB2(self.obs_buffer[0])
 
-        return self._update_obs(), r, done, info
+        return self._process_obs(), r, done, info
 
     def reset(self, **kwargs):
         # NoopReset
@@ -127,9 +131,9 @@ class AtariPreprocessing(gym.Wrapper):
         # return self._get_obs()
 
         # new
-        return self._update_obs()
+        return self._process_obs()
 
-    def _update_obs(self):
+    def _process_obs(self):
         if self.frame_skip > 1:  # more efficient in-place pooling
             np.maximum(self.obs_buffer[0], self.obs_buffer[1], out=self.obs_buffer[0])
 

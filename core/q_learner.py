@@ -74,14 +74,17 @@ class QLearner:
         # initialize replay buffer and schedules
         replay_buffer = ReplayBuffer(self.config.buffer_size, self.config.frame_history_len)
         eps_schedule = LinearSchedule(self.config.eps_start, self.config.eps_end, self.config.eps_steps)
-        # lr_schedule = LinearSchedule(self.config.lr_start, self.config.lr_end, self.config.lr_steps)
 
-        # things we want to log TODO: ask michael what else
+        # things we want to log
         log_recent_losses = deque(maxlen=100)
+        log_recent_max_qs = deque(maxlen=1_000)
+        log_recent_clipped_rewards = deque(maxlen=1_000)
         log_recent_episode_scores = deque(maxlen=100)
         log_recent_episode_scores_clipped = deque(maxlen=100)
-        log_recent_max_qs = deque(maxlen=1000)
-        log_recent_clipped_rewards = deque(maxlen=1000)
+        if self.config.terminal_on_life_loss:
+            log_recent_life_scores = deque(maxlen=100)
+            log_recent_life_scores_clipped = deque(maxlen=100)
+
         for _ in range(1000):
             log_recent_max_qs.append(0)
 
@@ -98,14 +101,19 @@ class QLearner:
         # main training loop:
         t = 0
         episode = 0
+        frame = self.env.reset()
         while t < self.config.nsteps_train:
-            t_ep_start = t
+            t_episode = 0
             episode += 1
-            episode_score = 0
-            episode_score_clipped = 0
-            frame = self.env.reset()
+            episode_score = 0.
+            episode_score_clipped = 0.
+            if self.config.terminal_on_life_loss:
+                life_score = 0.
+                life_score_clipped = 0.
             while True:
                 t += 1
+                t_episode += 1
+
                 # replay memory stuff
                 idx = replay_buffer.store_frame(frame)
                 state = replay_buffer.encode_recent_observation()
@@ -119,8 +127,6 @@ class QLearner:
 
                 # perform action in env and record reward
                 new_frame, reward, done, info = self.env.step(action)
-                reward_clipped = np.clip(reward, -1., 1.)
-                log_recent_clipped_rewards.append(reward_clipped)
 
                 # store the transition
                 replay_buffer.store_effect(idx, action, reward, done)
@@ -133,11 +139,38 @@ class QLearner:
 
                 # update schedulers
                 eps_schedule.update(t)
-                # lr_schedule.update(t)
 
-                # add reward to score
+                # clip reward
+                reward_clipped = np.clip(reward, -1., 1.)
+
+                # update score logs with current reward
                 episode_score += reward
                 episode_score_clipped += reward_clipped
+                log_recent_clipped_rewards.append(reward_clipped)
+                if self.config.terminal_on_life_loss:
+                    life_score += reward
+                    life_score_clipped += reward_clipped
+                    if info['life_loss']:
+                        log_recent_life_scores.append(life_score)
+                        log_recent_life_scores_clipped.append(life_score_clipped)
+                        life_score = 0.
+                        life_score_clipped = 0.
+
+                # logging
+                if t >= self.config.learning_start and t % self.config.logging_freq == 0:
+                    self.writer.add_scalar('avg_maxq_(1000_timesteps)', np.mean(log_recent_max_qs), t)
+                    self.writer.add_scalar('avg_reward_clipped_(1000_timesteps)', np.mean(log_recent_clipped_rewards), t)
+                    self.writer.add_scalar('avg_episode_score_(100_episodes)', np.mean(log_recent_episode_scores), t)
+                    self.writer.add_scalar('avg_episode_score_clipped_(100_episodes)',
+                                           np.mean(log_recent_episode_scores_clipped), t)
+                    self.writer.add_scalar('avg_losses_(100_updates)', np.mean(log_recent_losses), t)
+                    if self.config.terminal_on_life_loss:
+                        self.writer.add_scalar('avg_life_score_(100_lives)', np.mean(log_recent_life_scores), t)
+                        self.writer.add_scalar('avg_life_score_clipped_(100_lives)',
+                                               np.mean(log_recent_life_scores_clipped), t)
+                    if self.config.debug:
+                        self.writer.add_image('frame', frame, dataformats='HWC')
+                        self.writer.add_images('state', np.expand_dims(state, 0), dataformats='CHWN')
 
                 # update display
                 if self.config.display:
@@ -153,24 +186,15 @@ class QLearner:
                         fig.canvas.draw_idle()
                         fig.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
 
-                # logging
-                if t >= self.config.learning_start and t % self.config.logging_freq == 0:
-                    self.writer.add_scalar('avg_maxq_(1000_timesteps)', np.mean(log_recent_max_qs), t)
-                    self.writer.add_scalar('avg_reward_clipped_(1000_timesteps)', np.mean(log_recent_clipped_rewards), t)
-                    self.writer.add_scalar('avg_score_(100_episodes)', np.mean(log_recent_episode_scores), t)
-                    self.writer.add_scalar('avg_score_clipped_(100_episodes)',
-                                           np.mean(log_recent_episode_scores_clipped), t)
-                    self.writer.add_scalar('avg_losses_(100_updates)', np.mean(log_recent_losses), t)
-                    if self.config.debug:
-                        self.writer.add_image('frame', frame, dataformats='HWC')
-                        self.writer.add_images('state', np.expand_dims(state, 0), dataformats='CHWN')
+                # reset env if game over
+                if info['game_over']:
+                    frame = self.env.reset()
 
-                # terminate episode
-                if self.env.ale.game_over():
+                # end episode
+                if done or t_episode >= self.config.max_episode_length:
                     break
 
             # updates to perform at the end of an episode
-            t_ep_end = t
             log_recent_episode_scores.append(episode_score)
             log_recent_episode_scores_clipped.append(episode_score_clipped)
 
@@ -179,11 +203,11 @@ class QLearner:
             self.writer.add_scalar('score_clipped', episode_score_clipped, t)
 
             # print episode info to console
-            print(f'ep: {str(episode).rjust(5, " ")}  '
-                  f'steps: {str(t_ep_end - t_ep_start).rjust(5, " ")}  '
-                  f'score: {episode_score_clipped:.2f}  '
-                  f'epsilon: {eps_schedule.epsilon:.2f}  '
-                  f't: {str(t).rjust(9, " ")}')
+            print(f'| episode: {str(episode).rjust(4, " ")} '
+                  f'| steps: {str(t_episode).rjust(4, " ")} '
+                  f'| score: {episode_score_clipped:+.2f} '
+                  f'| eps: {eps_schedule.epsilon:.2f} '
+                  f'| t: {t:,} |')
 
             # break if finished training
             if t >= self.config.nsteps_train:
@@ -200,12 +224,9 @@ class QLearner:
 
     def add_key_listener(self):
         from pyglet.window import key
-
         self.env.render()
-
-        # allow ability to display live training with SPACEBAR on render window
+        # allow ability to display live training with <spacebar> on render window
         def on_key_press(symbol, modifiers):
             if symbol == key.SPACE:
                 self.render_train = not self.render_train
-
         self.env.viewer.window.push_handlers(on_key_press)
