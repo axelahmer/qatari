@@ -107,7 +107,7 @@ class QLearner:
             episode += 1
             episode_score = 0.
             episode_score_clipped = 0.
-            if self.config.terminal_on_life_loss:
+            if self.config.terminal_on_life_loss is False:
                 life_score = 0.
                 life_score_clipped = 0.
             while True:
@@ -164,13 +164,13 @@ class QLearner:
                     self.writer.add_scalar('avg_episode_score_clipped_(100_episodes)',
                                            np.mean(log_recent_episode_scores_clipped), t)
                     self.writer.add_scalar('avg_losses_(100_updates)', np.mean(log_recent_losses), t)
-                    if self.config.terminal_on_life_loss:
+                    if self.config.terminal_on_life_loss is False:
                         self.writer.add_scalar('avg_life_score_(100_lives)', np.mean(log_recent_life_scores), t)
                         self.writer.add_scalar('avg_life_score_clipped_(100_lives)',
                                                np.mean(log_recent_life_scores_clipped), t)
                     if self.config.debug:
-                        self.writer.add_image('frame', frame, dataformats='HWC')
-                        self.writer.add_images('state', np.expand_dims(state, 0), dataformats='CHWN')
+                        self.writer.add_image('debug_frame', frame, dataformats='HWC')
+                        self.writer.add_images('debug_state', np.expand_dims(state, 0), dataformats='CHWN')
 
                 # update display
                 if self.config.display:
