@@ -81,7 +81,7 @@ class QLearner:
         log_recent_clipped_rewards = deque(maxlen=1_000)
         log_recent_episode_scores = deque(maxlen=100)
         log_recent_episode_scores_clipped = deque(maxlen=100)
-        if self.config.terminal_on_life_loss:
+        if self.config.terminal_on_life_loss is False:
             log_recent_life_scores = deque(maxlen=100)
             log_recent_life_scores_clipped = deque(maxlen=100)
 
@@ -147,7 +147,7 @@ class QLearner:
                 episode_score += reward
                 episode_score_clipped += reward_clipped
                 log_recent_clipped_rewards.append(reward_clipped)
-                if self.config.terminal_on_life_loss:
+                if self.config.terminal_on_life_loss is False:
                     life_score += reward
                     life_score_clipped += reward_clipped
                     if info['life_loss']:
