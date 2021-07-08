@@ -23,7 +23,7 @@ if __name__ == '__main__':
         elif arg_name == 'config':
             config = config_dict[arg_val]()
         else:
-            print('unrecognized argument.\n\nexpected: "python main.py game=GAME_NAME qnet=MODULE_NAME seed=SEED config=CONFIG_NAME"')
+            print('error.\n\nexpected use: "python main.py game=GAME_NAME qnet=MODULE_NAME optim=OPTIMIZER_NAME seed=SEED config=CONFIG_NAME"')
 
     if config is None:
         config = config_dict['machado']()
