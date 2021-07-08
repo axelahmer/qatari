@@ -187,11 +187,12 @@ class QLearner:
                         fig.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
 
                 # reset env if game over
-                if info['game_over']:
+                if info['game_over'] or t_episode >= self.config.max_episode_length:
                     frame = self.env.reset()
+                    done = True
 
                 # end episode
-                if done or t_episode >= self.config.max_episode_length:
+                if done:
                     break
 
             # updates to perform at the end of an episode
@@ -205,7 +206,8 @@ class QLearner:
             # print episode info to console
             print(f'| episode: {str(episode).rjust(4, " ")} '
                   f'| steps: {str(t_episode).rjust(4, " ")} '
-                  f'| score: {episode_score_clipped:+.2f} '
+                  f'| score: {episode_score:+.2f} '
+                  f'| clipped score: {episode_score_clipped:+.2f} '
                   f'| eps: {eps_schedule.epsilon:.2f} '
                   f'| t: {t:,} |')
 
