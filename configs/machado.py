@@ -50,7 +50,7 @@ class MachadoConfig:
 
         # TRAINING
         self.nsteps_train = 200_000_000 // self.frame_skip  # = i.e. at 200_000_000 frames
-        self.learning_start = 50_000 // self.frame_skip  # i.e. at 50_000 frames
+        self.learning_start = 50_000
         self.learning_freq = 4
         self.gamma = 0.99
         self.target_update_freq = 10_000
