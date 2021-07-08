@@ -5,6 +5,7 @@ from configs import config_dict
 if __name__ == '__main__':
     game = None
     qnet = None
+    optim = None
     seed = None
     config = None
 
@@ -15,6 +16,8 @@ if __name__ == '__main__':
             game = arg_val
         elif arg_name == 'qnet':
             qnet = arg_val
+        elif arg_name == 'optim':
+            optim = arg_val
         elif arg_name == 'seed':
             seed = int(arg_val)
         elif arg_name == 'config':
@@ -31,6 +34,9 @@ if __name__ == '__main__':
 
     if qnet is not None:
         config.qnet = qnet
+
+    if optim is not None:
+        config.optimizer = optim
 
     if seed is not None:
         config.seed = seed
