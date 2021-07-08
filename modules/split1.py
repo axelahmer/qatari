@@ -52,6 +52,6 @@ class SplitNet1(nn.Module):
 
         # combine left and right: weight qs
         x = xl * xr
-        x = x.sum(1)
+        x = x.mean(1)
 
         return x
