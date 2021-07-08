@@ -37,6 +37,8 @@ class NatureConfig:
         self.rms_prop_lr = 0.00025
         self.rms_prop_alpha = 0.95
         self.rms_prop_eps = 0.1 / 32.0
+        self.rms_prop_weight_decay = 0
+        self.rms_prop_momentum = 0
 
         # LOGGING AND SAVING
         self.logging_freq = 10_000  # steps

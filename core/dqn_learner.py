@@ -124,8 +124,8 @@ class DQNLearner(QLearner):
                                        lr=self.config.rms_prop_lr,
                                        alpha=self.config.rms_prop_alpha,
                                        eps=self.config.rms_prop_eps,
-                                       weight_decay=0,
-                                       momentum=0,
+                                       weight_decay=self.config.rms_prop_weight_decay,
+                                       momentum=self.config.rms_prop_momentum,
                                        centered=True)
         else:
             print('optimizer incorrectly specified')
