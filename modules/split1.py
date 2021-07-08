@@ -31,10 +31,13 @@ class SplitNet1(nn.Module):
     def forward(self, x):
         # left and right: spatial state embeddings
         xl = F.relu(self.conv1l(x))
-        xr = xl.detach()
+        with th.no_grad():
+            xr = xl.clone()
         xr = F.relu(self.conv2r(xr))
         xl = F.relu(self.conv2l(xl))
-        xr = th.cat((xr, xl.detach()), 1)
+        with th.no_grad():
+            xl_clone = xl.clone()
+        xr = th.cat((xr, xl_clone), 1)
         xr = F.relu(self.conv3r(xr))
         xl = F.relu(self.conv3l(xl))
 
@@ -47,7 +50,7 @@ class SplitNet1(nn.Module):
         # right: non spatial state embeddings
         xr = xr.flatten(1)
         xr = F.relu(self.lin1r(xr))
-        xr = F.softmax(self.lin2r(xr))
+        xr = F.softmax(self.lin2r(xr), 0)
         xr = xr.unsqueeze(-1)
 
         # combine left and right: weight qs
