@@ -7,7 +7,7 @@ class MixerNet(nn.Module):
 
     """
 
-    def __init__(self, in_channels, num_actions):
+    def __init__(self, in_channels, num_actions, num_layers=1):
         super().__init__()
 
         # nature nets
