@@ -2,16 +2,11 @@ from .nature import NatureNet
 from .summer import SummerNet
 from .qmixer import MixerNet
 from .split1 import SplitNet1
+from .split2 import SplitNet2
 
-module_dict = {}
+module_dict = {"nature": NatureNet,
+               "mixer": MixerNet,
+               "summer": SummerNet,
+               "split1": SplitNet1,
+               "split2": SplitNet2}
 
-# not dumb
-module_dict["nature"] = NatureNet
-
-# kinda dumb
-module_dict["mixer"] = MixerNet
-
-# very dumb
-module_dict["summer"] = SummerNet
-
-module_dict["split1"] = SplitNet1
