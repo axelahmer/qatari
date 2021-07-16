@@ -50,11 +50,12 @@ class SplitNet1(nn.Module):
         # right: non spatial state embeddings
         xr = xr.flatten(1)
         xr = F.relu(self.lin1r(xr))
-        xr = F.softmax(self.lin2r(xr), 0)
+        #xr = F.softmax(self.lin2r(xr), 0)
+        xr = self.lin2r(xr)
         xr = xr.unsqueeze(-1)
 
         # combine left and right: weight qs
         x = xl * xr
-        x = x.mean(1)
+        x = x.sum(1)
 
         return x

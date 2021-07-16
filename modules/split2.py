@@ -28,9 +28,9 @@ class SplitNet2(nn.Module):
         lin = th.arange(0., 7.)
         rows = th.row_stack((lin,) * 7).reshape(1, 1, 7, 7)
         cols = th.column_stack((lin,) * 7).reshape(1, 1, 7, 7)
-        self.pos_block = th.cat((rows, cols), dim=1)
+        self.pos_block = th.cat((rows, cols), dim=1).cuda()/7.
 
-        self.pos_blocks = th.stack((self.pos_block.squeeze(0),) * 32, dim=0)
+        self.pos_blocks = th.stack((self.pos_block.squeeze(0),) * 32, dim=0).cuda()
 
     def forward(self, x):
         # embed state
@@ -39,7 +39,7 @@ class SplitNet2(nn.Module):
         s = F.relu(self.conv3(s))  # N x 64 x 7 x 7
 
         # calc qs
-        if s.shape[0] is 1:
+        if s.shape[0] == 1:
             q = th.cat((s, self.pos_block), dim=1)
         else:
             q = th.cat((s, self.pos_blocks), dim=1)  # N x (64+2=66) x 7 x 7
@@ -49,7 +49,7 @@ class SplitNet2(nn.Module):
         q = q.permute(0, 2, 1)
 
         # calc weights
-        w = s.flatten(1).detach()
+        w = s.flatten(1)
         w = F.relu(self.lin1(w))
         w = self.lin2(w)
         w = w.unsqueeze(-1)
