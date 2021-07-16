@@ -59,3 +59,94 @@ class DuelingAdvantages(nn.Module):
         q = v + a - a.mean(1).unsqueeze(1).expand(x.size(0), self.num_actions)
 
         return q
+
+
+class DuelingTFAS(nn.Module):
+    """
+    Thinking fast and slow module:
+
+    2 streams: fast and slow.
+
+    fast: 49 spatial actors each suggest the local action advantages slow: fully connected layers create a baseline
+    advantage and state value, in addition decides how to weight all the advantages.
+
+    weighted advantages creates the total advantage and then combine with state value to generate qs, as in a dueling
+    network.
+    """
+
+    def __init__(self, in_channels, num_actions):
+        super().__init__()
+
+        # embed state
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=8, stride=4),
+            nn.ReLU()
+        )
+        self.fast_state = nn.Sequential(
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+        self.slow_state = nn.Sequential(
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+
+        ### FAST SIDE
+
+        self.adv_actors = nn.Sequential(
+            nn.Conv2d(32, 24, kernel_size=1, stride=1),
+            nn.ReLU(),
+            nn.Conv2d(24, num_actions, kernel_size=1, stride=1),
+            nn.Flatten(2)
+        )
+
+        ### SLOW SIDE
+        state_dim = 32 * 7 * 7
+
+        # value
+        self.value = nn.Sequential(
+            nn.Linear(state_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)
+        )
+
+        # base advantage
+        self.adv_base = nn.Sequential(
+            nn.Linear(state_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, num_actions)
+        )
+
+        # adv_weights
+        self.adv_weights = nn.Sequential(
+            nn.Linear(state_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, 7 * 7 + 1),
+            nn.Softmax()
+        )
+
+    def forward(self, x):
+        # embed state
+        s = self.conv1(x)
+        s_fast = self.fast_state(s)
+        s_slow = self.slow_state(s).flatten(1)
+
+        # calc advantages
+        adv_actors = self.adv_actors(s_fast)  # N x A x M
+        adv_base = self.adv_base(s_slow).unsqueeze(-1)  # N x A x 1
+        adv_all = th.cat((adv_base, adv_actors), dim=2)  # N x A x (M+1)
+        adv_w = self.adv_weights(s_slow).unsqueeze(1)  # N x 1 x (M+1)
+        adv = (adv_all * adv_w).sum(2)  # N x A
+        adv = adv - adv.mean(1).unsqueeze(-1)  # N x A
+
+        # calc value
+        val = self.value(s_slow).expand(adv.shape)  # N X A
+
+        # calc qs
+        qs = val + adv  # N x A
+
+        return qs
