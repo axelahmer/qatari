@@ -4,6 +4,7 @@ from .qmixer import MixerNet
 from .split1 import SplitNet1
 from .split2 import SplitNet2
 from .dueling_experts import DuelingAdvantages, DuelingTFAS
+from .boosters import AdvantageBooster1
 
 
 module_dict = {"nature": NatureNet,
@@ -12,5 +13,6 @@ module_dict = {"nature": NatureNet,
                "split1": SplitNet1,
                "split2": SplitNet2,
                "duela": DuelingAdvantages,
-               "dueltfas": DuelingTFAS}
+               "dueltfas": DuelingTFAS,
+               "boost1": AdvantageBooster1}
 
