@@ -1,14 +1,14 @@
 import torch.nn as nn
 import torch.nn.functional as F
+from modules.qnet import QNet
 
-
-class MixerNet(nn.Module):
+class MixerNet(QNet):
     """
 
     """
 
-    def __init__(self, in_channels, num_actions, num_layers=1):
-        super().__init__()
+    def __init__(self, in_channels, num_actions, writer=None):
+        super().__init__(writer)
 
         # nature nets
         self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=8, stride=4)

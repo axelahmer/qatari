@@ -1,16 +1,16 @@
 import torch.nn as nn
 import torch.nn.functional as F
+from modules.qnet import QNet
 
-
-class SummerNet(nn.Module):
+class SummerNet(QNet):
     """
     conceptually divides observation into 16 partitions, each 21x21x4.
     applies 2 conv layers to the partitions and then 2 linear ('network in network') layers resulting in space: num_actions x4x4
     values are then summed (and averaged) to give q values for each action: num_actions
     """
 
-    def __init__(self, in_channels, num_actions):
-        super().__init__()
+    def __init__(self, in_channels, num_actions, writer):
+        super().__init__(writer)
         self.net1 = nn.Conv2d(in_channels, 32, kernel_size=7, stride=7)
         self.net2 = nn.Conv2d(32, 64, kernel_size=3, stride=3)
         self.nin1 = nn.Conv2d(64, 32, kernel_size=1, stride=1)

@@ -1,15 +1,18 @@
+import tensorboard.summary
 import torch.nn as nn
 import torch.nn.functional as F
 import torch as th
+from torch.utils.tensorboard import SummaryWriter
+from modules.qnet import QNet
 
 
-class DuelingAdvantages(nn.Module):
+class DuelingAdvantages(QNet):
     """
 
     """
 
-    def __init__(self, in_channels, num_actions):
-        super().__init__()
+    def __init__(self, in_channels, num_actions, writer: SummaryWriter):
+        super().__init__(writer)
         self.num_actions = num_actions
 
         # state embedding
@@ -58,10 +61,13 @@ class DuelingAdvantages(nn.Module):
         # calculate q estimates
         q = v + a - a.mean(1).unsqueeze(1).expand(x.size(0), self.num_actions)
 
+        if self.logging:
+            self.writer.add_image('w', w.reshape(1, 1, 3, 3))
+
         return q
 
 
-class DuelingTFAS(nn.Module):
+class DuelingTFAS(QNet):
     """
     Thinking fast and slow module:
 
@@ -74,8 +80,8 @@ class DuelingTFAS(nn.Module):
     network.
     """
 
-    def __init__(self, in_channels, num_actions):
-        super().__init__()
+    def __init__(self, in_channels, num_actions, writer: SummaryWriter = None):
+        super().__init__(writer)
 
         # embed state
         self.conv1 = nn.Sequential(
@@ -149,4 +155,55 @@ class DuelingTFAS(nn.Module):
         # calc qs
         qs = val + adv  # N x A
 
+        if self.writer is not None:
+            self.writer.add_scalars('weights', adv_w[0, 0])
+            self.writer.add_image('im', x[0], dataformats='CHW')
+            # print(adv_w[0, 0])
+
         return qs
+
+# class DuelingCommunicatingAdvantages(QNet):
+#     def __init__(self):
+#         super().__init__()
+#         self.num_actions = num_actions
+#
+#         # nature nets
+#         self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=8, stride=4,
+#                                padding=(4, 4))  # 22x22
+#         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2, padding=(1, 1))  # 11x11
+#         self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=(1, 1))  # 11x11
+#
+#         self.nin1 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+#         self.nin2 = nn.Conv2d(64, num_actions + 1, kernel_size=1, stride=1)
+#
+#         self.num_actors = 11 * 11
+#
+#         self.relu = nn.ReLU()
+#
+#     def forward(self, state):
+#         # embed state
+#
+#         s = self.relu(self.conv1(state)).contiguous()
+#         s = self.relu(self.conv2(s))
+#         s = self.relu(self.conv3(s))
+#
+#         # calc agent qs
+#         qs = self.relu(self.nin1(s))
+#         qs = self.nin2(qs).flatten(2)  # N x (A + 1) x self.num_actors
+#
+#         # calc weights
+#         s_flat = s.flatten(1)
+#
+#         qs = qs.unsqueeze(-1)  # N x (A + 1) X self.num_actors X 1
+#
+#         qs_n = qs.narrow(1, 0, self.num_actions)  # N x A X self.num_actors X 1
+#
+#         w = qs.narrow(1, self.num_actions, 1)  # N x 1 X self.num_actors X 1
+#         w = F.softmax(w, dim=2)
+#
+#         res = qs_n.mul(w)  # N x A x self.num_actors X 1
+#         res = res.sum(2)  # N x A x 1
+#
+#         res = res.squeeze(2)
+#
+#         return res

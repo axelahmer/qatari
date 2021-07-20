@@ -1,15 +1,15 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch as th
+from modules.qnet import QNet
 
-
-class SplitNet2(nn.Module):
+class SplitNet2(QNet):
     """
 
     """
 
-    def __init__(self, in_channels, num_actions):
-        super().__init__()
+    def __init__(self, in_channels, num_actions, writer=None):
+        super().__init__(writer)
 
         # state embedding
         self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=8, stride=4)

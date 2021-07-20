@@ -2,18 +2,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch as th
 from torch.utils.tensorboard import SummaryWriter
+from modules.qnet import QNet
 
-
-class AdvantageBooster1(nn.Module):
+class AdvantageBooster1(QNet):
     """
 
     """
 
     def __init__(self, in_channels, num_actions, writer: SummaryWriter):
-        super().__init__()
-        self.logging = False
+        super().__init__(writer)
         self.num_actions = num_actions
-        self.writer = writer
 
         # state embedding
         self.state_embed = nn.Sequential(
@@ -70,18 +68,11 @@ class AdvantageBooster1(nn.Module):
         # add boosted correction term
         q = q_gamma + delta_gamma
 
-        # if self.logging is True:
+        # if self.logging:
         #     self.writer.add_image('obs', x[0])
         #     self.writer.add_histogram('w_high', w_high.reshape(1, 1, 3, 3))
 
         return q
-
-    def log_forward(self, x):
-        self.logging = True
-        y = self(x)
-        self.logging = False
-
-        return y
 
     def weight_tensor(self, t, w, unfolder):
         """

@@ -22,8 +22,8 @@ class DQNLearner(QLearner):
         out_channels = self.env.action_space.n
 
         network = module_dict[self.config.qnet]
-        self.q_network = network(in_channels, out_channels).to(self.device)
-        self.target_network = network(in_channels, out_channels).to(self.device)
+        self.q_network = network(in_channels, out_channels, self.writer).to(self.device)
+        self.target_network = network(in_channels, out_channels, self.writer).to(self.device)
 
         # copy q network params to target network
         self.update_target_params()
@@ -33,13 +33,18 @@ class DQNLearner(QLearner):
 
         print(f'successfully built model on device: {self.device}\nconfig: {self.config.__dict__}')
 
-    def get_greedy_action(self, state):
-        with torch.no_grad():
-            s = torch.tensor(state, dtype=torch.uint8, device=self.device).unsqueeze(0)
-            # process state to be [0,1] floats
-            s = self.process_state(s)
-            # forward pass of q network
-            q_values = self.q_network(s).squeeze().to('cpu').tolist()
+    def get_greedy_action(self, state, t):
+
+        s = torch.tensor(state, dtype=torch.uint8, device=self.device).unsqueeze(0)
+        # process state to be [0,1] floats
+        s = self.process_state(s)
+        # forward pass of q network
+        if self.config.log_inside_qnet and t % self.config.log_inside_qnet_freq == 0:
+            q_values = self.q_network.log_forward(s)
+        else:
+            with torch.no_grad():
+                q_values = self.q_network.forward(s)
+        q_values = qs.squeeze().to('cpu').tolist()
         action = np.argmax(q_values)
         q_max = q_values[action]
 
@@ -133,7 +138,6 @@ class DQNLearner(QLearner):
 
 
 if __name__ == '__main__':
-
     # build model
     model = DQNLearner()
 

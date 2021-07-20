@@ -33,7 +33,7 @@ class QLearner:
         self.writer.add_text('config_info', str(self.config.__dict__))
 
     # ABSTRACT METHOD
-    def get_greedy_action(self, q_input):
+    def get_greedy_action(self, q_input, t):
         raise NotImplementedError
 
     # ABSTRACT METHOD
@@ -119,7 +119,7 @@ class QLearner:
                 state = replay_buffer.encode_recent_observation()
 
                 # chose action according to current Q and exploration
-                greedy_action, max_q = self.get_greedy_action(state)
+                greedy_action, max_q = self.get_greedy_action(state, t)
                 action = self.get_eps_greedy_action(greedy_action, eps_schedule.epsilon)
 
                 # store max q value

@@ -24,7 +24,7 @@ class MachadoConfig:
         self.full_action_space = True
         self.noop_max = 0
         self.terminal_on_life_loss = False
-        self.max_episode_length = 18_000 // self.frame_skip  # i.e. 18_000 frames
+        self.max_episode_length = 18_000 // self.frame_skip  # 18_000 frames
 
         # OPTIMIZER
         self.optimizer = 'rms_prop'  # 'adam', 'rms_prop'
@@ -42,17 +42,20 @@ class MachadoConfig:
         self.rms_prop_momentum = 0
 
         # LOGGING AND SAVING
+        self.log_inside_qnet = True
+        self.log_inside_qnet_freq = 10, 000
         self.logging_freq = 10_000  # steps
         self.save_param_freq = 500_000
 
+
         # REPLAY BUFFER
-        self.buffer_size = 1_000_000  # 1_000_000
+        self.buffer_size = 1_000_000
         self.frame_history_len = 4
         self.batch_size = 32
 
         # TRAINING
-        self.nsteps_train = 200_000_000 // self.frame_skip  # = i.e. at 200_000_000 frames
-        self.learning_start = 50_000
+        self.nsteps_train = 200_000_000 // self.frame_skip  # 200_000_000 frames
+        self.learning_start = 50_000  # 50_000
         self.learning_freq = 4
         self.gamma = 0.99
         self.target_update_freq = 10_000
