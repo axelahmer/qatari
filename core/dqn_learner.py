@@ -39,12 +39,13 @@ class DQNLearner(QLearner):
         # process state to be [0,1] floats
         s = self.process_state(s)
         # forward pass of q network
-        if self.config.log_inside_qnet and t % self.config.log_inside_qnet_freq == 0:
+        if self.config.log_inside_qnet is True and t % self.config.log_inside_qnet_freq == 0:
             q_values = self.q_network.log_forward(s)
         else:
+            # log stuff
             with torch.no_grad():
                 q_values = self.q_network.forward(s)
-        q_values = qs.squeeze().to('cpu').tolist()
+        q_values = q_values.squeeze().to('cpu').tolist()
         action = np.argmax(q_values)
         q_max = q_values[action]
 
@@ -72,7 +73,7 @@ class DQNLearner(QLearner):
 
         # convert to tensor and move to correct device
         s_batch = torch.tensor(s_batch, dtype=torch.uint8, device=self.device)
-        a_batch = torch.tensor(a_batch, dtype=torch.int64, device=self.device).unsqueeze(1)
+        a_batch = torch.tensor(a_batch, dtype=torch.int64, device=self.device)
         r_batch = torch.tensor(r_batch, dtype=torch.float32, device=self.device)
         sp_batch = torch.tensor(sp_batch, dtype=torch.uint8, device=self.device)
         done_mask_batch = torch.tensor(done_mask_batch, dtype=torch.bool, device=self.device)
@@ -81,21 +82,26 @@ class DQNLearner(QLearner):
         r_batch.clip_(min=-1., max=1.)
 
         # process state batches on device
-        s = self.process_state(s_batch)
-        sp = self.process_state(sp_batch)
+        s0 = self.process_state(s_batch)
+        s1 = self.process_state(sp_batch)
 
         # calc qs and q targets
+        q0 = self.q_network(s0).gather(1, a_batch.unsqueeze(1)).squeeze()
         with torch.no_grad():
-            target_q_values = self.target_network(sp)
+            if self.config.double_dqn:
+                # double dqn q target
+                _, a1 = self.q_network(s1).max(1)
+                q1_bootstrap = self.target_network(s1).gather(1, a1.unsqueeze(1)).squeeze()
+            else:
+                # standard dqn q target
+                q1_bootstrap, _ = self.target_network(s1).max(1)
 
-        q_max_t = self.q_network(s).gather(1, a_batch).squeeze()
-
-        q_maxa_tp1, _ = target_q_values.max(1)
-
-        q_targets = torch.where(done_mask_batch, r_batch, r_batch + q_maxa_tp1 * self.config.gamma)
+        td_targets = torch.where(done_mask_batch,
+                                 r_batch,
+                                 r_batch + q1_bootstrap * self.config.gamma)
 
         # huber loss
-        loss = F.huber_loss(q_max_t, q_targets.detach())
+        loss = F.huber_loss(q0, td_targets.detach())
 
         # optimizer step
         self.optimizer.zero_grad()
@@ -104,7 +110,7 @@ class DQNLearner(QLearner):
 
         # log graph if not already done
         if self.logged_graph is False:
-            self.writer.add_graph(self.q_network, s)
+            self.writer.add_graph(self.q_network, s0)
             self.logged_graph = True
 
         return loss.item()

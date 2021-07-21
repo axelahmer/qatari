@@ -9,6 +9,7 @@ class MachadoConfig:
     def __init__(self):
         self.debug = True  # whether to print state and observation images to tensorboard
         self.display = True  # display game and max q plot
+        self.double_dqn = True
         # self.device = 'cuda:0'  # what device to do learning updates with
 
         # NETWORK ARCHITECTURE
@@ -29,12 +30,14 @@ class MachadoConfig:
         # OPTIMIZER
         self.optimizer = 'rms_prop'  # 'adam', 'rms_prop'
 
+        # ADAM SETTINGS
         self.adam_lr = 0.0000625
         self.adam_beta1 = 0.9
         self.adam_beta2 = 0.999
         self.adam_eps = 0.00015
         self.adam_weight_decay = 0
 
+        # RMS PROP SETTINGS
         self.rms_prop_lr = 0.00025
         self.rms_prop_alpha = 0.95
         self.rms_prop_eps = 0.1 / 32.0
@@ -43,10 +46,9 @@ class MachadoConfig:
 
         # LOGGING AND SAVING
         self.log_inside_qnet = True
-        self.log_inside_qnet_freq = 10, 000
+        self.log_inside_qnet_freq = 10_000
         self.logging_freq = 10_000  # steps
         self.save_param_freq = 500_000
-
 
         # REPLAY BUFFER
         self.buffer_size = 1_000_000
