@@ -3,7 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 class QNet(nn.Module):
-    def __init__(self, writer: SummaryWriter):
+    def __init__(self, writer: SummaryWriter = None):
         super().__init__()
         self.writer = writer
         self.logging = False
