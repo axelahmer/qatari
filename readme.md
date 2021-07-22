@@ -14,7 +14,7 @@ Run an example simulation:
 
 Run a specific game with specific config (other args overwrite the config):
 
-`python main.py game=GAME_NAME qnet=MODULE_NAME seed=SEED config=CONFIG_NAME`
+`python main.py --config CONFIG_NAME --game GAME_NAME --seed SEED --qnet MODULE_NAME --double=True/False`
 
 Tensorboard output logged to:
 
