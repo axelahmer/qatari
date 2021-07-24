@@ -128,6 +128,10 @@ class QLearner:
                 # perform action in env and record reward
                 new_frame, reward, done, info = self.env.step(action)
 
+                # enforce game termination after specified num frames
+                if t_episode >= self.config.max_episode_length:
+                    done = True
+
                 # store the transition
                 replay_buffer.store_effect(idx, action, reward, done)
                 frame = new_frame
@@ -187,9 +191,8 @@ class QLearner:
                         fig.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
 
                 # reset env if game over
-                if info['game_over'] or t_episode >= self.config.max_episode_length:
+                if info['game_over']:
                     frame = self.env.reset()
-                    done = True
 
                 # end episode
                 if done:
