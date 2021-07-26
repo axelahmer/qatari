@@ -9,13 +9,16 @@ class MachadoConfig:
     def __init__(self):
         self.debug = True  # whether to print state and observation images to tensorboard
         self.display = True  # display game and max q plot
-        self.double_dqn = True
+        self.double_dqn = False
         # self.device = 'cuda:0'  # what device to do learning updates with
 
         # NETWORK ARCHITECTURE
         self.qnet = 'nature'  # 'nature', 'summer', 'mixer'
 
-        # ENVIRONMENT
+        # ENVIRONMENT TYPE
+        self.env_type = 'atari'  # 'atari' or 'procgen'
+
+        # ATARI ENVIRONMENT
         self.game = 'pong'
         self.seed = 123
         self.mode = 0
@@ -48,7 +51,7 @@ class MachadoConfig:
         self.log_inside_qnet = True
         self.log_inside_qnet_freq = 10_000
         self.logging_freq = 10_000  # steps
-        self.save_param_freq = 500_000
+        self.save_param_freq = 5_000
 
         # REPLAY BUFFER
         self.buffer_size = 1_000_000

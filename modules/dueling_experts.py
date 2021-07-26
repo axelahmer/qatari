@@ -1,8 +1,12 @@
+import matplotlib
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch as th
+from matplotlib import pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 from modules.qnet import QNet
+import seaborn as sns
 
 
 class DuelingAdvantages(QNet):
@@ -12,6 +16,9 @@ class DuelingAdvantages(QNet):
 
     def __init__(self, in_channels, num_actions, writer: SummaryWriter):
         super().__init__(writer)
+        self.weights = None
+        self.fig, self.ax = fig, ax = plt.subplots(figsize=(6, 6))
+        self.fig.show()
         self.num_actions = num_actions
 
         # state embedding
@@ -60,10 +67,24 @@ class DuelingAdvantages(QNet):
         # calculate q estimates
         q = v + a - a.mean(1).unsqueeze(1).expand(x.size(0), self.num_actions)
 
+        # store weights for rendering
+        self.weights = w
+
         if self.logging:
-            self.writer.add_image('w', w.reshape(1, 1, 3, 3))
+            pass
+            # fig, ax = plt.subplots()
+            # im = ax.imshow(w[0].reshape(7, 7).data.cpu().numpy())
+            # self.writer.add_image('i', x[0])
+            # self.writer.add_image('w', w.reshape(1, 7, 7), dataformats='CHW')
+            # self.writer.add_figure('wfig', fig)
 
         return q
+
+    def render(self):
+        arr = self.weights.detach()[0].cpu().reshape(7, 7).numpy()
+        sns.heatmap(arr, ax=self.ax, cbar=False, annot=True, fmt='.2f')
+
+
 
 
 class DuelingTFAS(QNet):

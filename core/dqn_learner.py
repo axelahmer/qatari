@@ -1,9 +1,9 @@
 import sys
 from core.q_learner import QLearner
 import torch
-import torch.nn.functional as F
 import numpy as np
 from modules import module_dict
+import torch.nn as nn
 
 
 class DQNLearner(QLearner):
@@ -21,15 +21,18 @@ class DQNLearner(QLearner):
         in_channels = self.env.observation_space.shape[-1] * self.config.frame_history_len
         out_channels = self.env.action_space.n
 
-        network = module_dict[self.config.qnet]
-        self.q_network = network(in_channels, out_channels, self.writer).to(self.device)
-        self.target_network = network(in_channels, out_channels, self.writer).to(self.device)
+        self.network_ptr = module_dict[self.config.qnet]
+        self.q_network = self.network_ptr(in_channels, out_channels, self.writer).to(self.device)
+        self.target_network = self.network_ptr(in_channels, out_channels, self.writer).to(self.device)
 
         # copy q network params to target network
         self.update_target_params()
 
         # add optimizer
         self.optimizer = self.make_optimizer()
+
+        # loss fn
+        self.loss_fn = nn.HuberLoss()
 
         print(f'successfully built model on device: {self.device}\nconfig: {self.config.__dict__}')
 
@@ -42,9 +45,12 @@ class DQNLearner(QLearner):
         if self.config.log_inside_qnet is True and t % self.config.log_inside_qnet_freq == 0:
             q_values = self.q_network.log_forward(s)
         else:
-            # log stuff
             with torch.no_grad():
                 q_values = self.q_network.forward(s)
+
+        if self.render_qnet:
+            self.q_network.render()
+
         q_values = q_values.squeeze().to('cpu').tolist()
         action = np.argmax(q_values)
         q_max = q_values[action]
@@ -88,7 +94,7 @@ class DQNLearner(QLearner):
         # calc qs and q targets
         q0 = self.q_network(s0).gather(1, a_batch.unsqueeze(1)).squeeze()
         with torch.no_grad():
-            if self.config.double_dqn:
+            if self.config.double_dqn is True:
                 # double dqn q target
                 _, a1 = self.q_network(s1).max(1)
                 q1_bootstrap = self.target_network(s1).gather(1, a1.unsqueeze(1)).squeeze()
@@ -101,7 +107,7 @@ class DQNLearner(QLearner):
                                  r_batch + q1_bootstrap * self.config.gamma)
 
         # huber loss
-        loss = F.huber_loss(q0, td_targets.detach())
+        loss = self.loss_fn(q0, td_targets.detach())
 
         # optimizer step
         self.optimizer.zero_grad()

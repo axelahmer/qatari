@@ -13,3 +13,7 @@ class QNet(nn.Module):
         y = self.forward(x)
         self.logging = False
         return y
+
+    def render(self):
+        pass
+

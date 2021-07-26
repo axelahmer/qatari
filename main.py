@@ -8,6 +8,7 @@ if __name__ == '__main__':
     # parse args
     parser = argparse.ArgumentParser(description='Process Qatari training arguments.')
     parser.add_argument('--config', type=str, default='machado', choices=config_dict.keys())
+    parser.add_argument('--env_type', type=str, choices=['atari', 'procgen'])
     parser.add_argument('--game', type=str)
     parser.add_argument('--seed', type=int)
     parser.add_argument('--qnet', type=str, choices=module_dict.keys())
@@ -19,15 +20,17 @@ if __name__ == '__main__':
     config = config_dict[args.config]()
 
     # overwrite config with args if specified
-    if hasattr(args, 'game'):
+    if args.env_type is not None:
+        config.env_type = args.env_type
+    if args.game is not None:
         config.game = args.game
-    if hasattr(args, 'seed'):
+    if args.seed is not None:
         config.seed = args.seed
-    if hasattr(args, 'qnet'):
+    if args.qnet is not None:
         config.qnet = args.qnet
-    if hasattr(args, 'optim'):
+    if args.optim is not None:
         config.optimizer = args.optim
-    if hasattr(args, 'double'):
+    if args.double is not None:
         config.double_dqn = args.double
 
     # load and run model

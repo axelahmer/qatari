@@ -7,6 +7,7 @@ from utils.replay_buffer import ReplayBuffer
 from gym.envs.atari.atari_env import AtariEnv
 from utils.preprocess_wrapper import AtariPreprocessing
 from datetime import datetime
+import torch
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 from configs.machado import MachadoConfig
@@ -25,47 +26,55 @@ class QLearner:
         self.env = self.make_env()
         self.q_network = None
         self.render_train = True
+        self.render_qnet = False
 
-        # init. tensorboard writer
-        run_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.log_dir = f'results/{self.config.game}/{self.config.qnet}_{self.config.seed}_{run_time}'
-        self.writer = SummaryWriter(log_dir=self.log_dir, max_queue=100)
+        # logging stuff
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.PATH = f'results/{self.config.env_type}/{self.config.game}/{self.config.qnet}/{self.config.seed}/{timestamp}'
+        self.MODEL_PATH = self.PATH + 'model.params'
+
+        self.writer = SummaryWriter(log_dir=self.PATH, max_queue=100)
         self.writer.add_text('config_info', str(self.config.__dict__))
 
-    # ABSTRACT METHOD
+    # IMPLEMENT ME
     def get_greedy_action(self, q_input, t):
         raise NotImplementedError
 
-    # ABSTRACT METHOD
+    # IMPLEMENT ME
     def train_step(self, t, replay_buffer):
         raise NotImplementedError
 
     def make_env(self):
         # create environment following Machado et al. 2018
+        if self.config.env_type == 'atari':
+            env = AtariEnv(
+                game=self.config.game,
+                mode=self.config.mode,
+                difficulty=self.config.difficulty,
+                obs_type='image',
+                frameskip=1,  # skipping handled by wrapper
+                repeat_action_probability=self.config.repeat_action_probability,
+                full_action_space=self.config.full_action_space
+            )
 
-        env = AtariEnv(
-            game=self.config.game,
-            mode=self.config.mode,
-            difficulty=self.config.difficulty,
-            obs_type='image',
-            frameskip=1,  # skipping handled by wrapper
-            repeat_action_probability=self.config.repeat_action_probability,
-            full_action_space=self.config.full_action_space
-        )
+            env = AtariPreprocessing(
+                env=env,
+                noop_max=self.config.noop_max,
+                frame_skip=self.config.frame_skip,
+                screen_size=84,
+                terminal_on_life_loss=self.config.terminal_on_life_loss,
+                grayscale_obs=True,
+                grayscale_newaxis=True,  # extra axis required for replay buffer
+                scale_obs=False
+            )
 
-        env = AtariPreprocessing(
-            env=env,
-            noop_max=self.config.noop_max,
-            frame_skip=self.config.frame_skip,
-            screen_size=84,
-            terminal_on_life_loss=self.config.terminal_on_life_loss,
-            grayscale_obs=True,
-            grayscale_newaxis=True,  # extra axis required for replay buffer
-            scale_obs=False
-        )
+            # set seed
+            env.seed(self.config.seed)
 
-        # set seed
-        env.seed(self.config.seed)
+        elif self.config.env_type == 'procgen':
+            env = None
+        else:
+            raise NotImplementedError
 
         return env
 
@@ -147,7 +156,7 @@ class QLearner:
                 # clip reward
                 reward_clipped = np.clip(reward, -1., 1.)
 
-                # update score logs with current reward
+                # update score logs
                 episode_score += reward
                 episode_score_clipped += reward_clipped
                 log_recent_clipped_rewards.append(reward_clipped)
@@ -163,7 +172,8 @@ class QLearner:
                 # logging
                 if t >= self.config.learning_start and t % self.config.logging_freq == 0:
                     self.writer.add_scalar('avg_maxq_(1000_timesteps)', np.mean(log_recent_max_qs), t)
-                    self.writer.add_scalar('avg_reward_clipped_(1000_timesteps)', np.mean(log_recent_clipped_rewards), t)
+                    self.writer.add_scalar('avg_reward_clipped_(1000_timesteps)', np.mean(log_recent_clipped_rewards),
+                                           t)
                     self.writer.add_scalar('avg_episode_score_(100_episodes)', np.mean(log_recent_episode_scores), t)
                     self.writer.add_scalar('avg_episode_score_clipped_(100_episodes)',
                                            np.mean(log_recent_episode_scores_clipped), t)
@@ -183,12 +193,16 @@ class QLearner:
                         # render game
                         self.env.render()
                         # plot running max q
-                        ax.set_title(f'max q eps:{eps_schedule.epsilon:.3f}')
                         line_maxq.set_ydata(log_recent_max_qs)
                         ax.relim()
                         ax.autoscale_view()  # automatic axis scaling
                         fig.canvas.draw_idle()
                         fig.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
+
+                # save params
+                if t % self.config.save_param_freq == 0:
+                    torch.save(self.q_network.state_dict(), self.MODEL_PATH)
+                    print(f'weights saved at t={t}')
 
                 # reset env if game over
                 if info['game_over']:
@@ -198,13 +212,13 @@ class QLearner:
                 if done:
                     break
 
-            # updates to perform at the end of an episode
+            # store episode scores
             log_recent_episode_scores.append(episode_score)
             log_recent_episode_scores_clipped.append(episode_score_clipped)
 
             # report episode stats
-            self.writer.add_scalar('score', episode_score, t)
-            self.writer.add_scalar('score_clipped', episode_score_clipped, t)
+            # self.writer.add_scalar('score', episode_score, t)
+            # self.writer.add_scalar('score_clipped', episode_score_clipped, t)
 
             # print episode info to console
             print(f'| episode: {str(episode).rjust(4, " ")} '
@@ -214,9 +228,8 @@ class QLearner:
                   f'| eps: {eps_schedule.epsilon:.2f} '
                   f'| t: {t:,} |')
 
-            # break if finished training
-            if t >= self.config.nsteps_train:
-                break
+    def load(self):
+        self.q_network.load_state_dict(torch.load(self.MODEL_PATH))
 
     def run(self):
         self.train()
@@ -230,8 +243,12 @@ class QLearner:
     def add_key_listener(self):
         from pyglet.window import key
         self.env.render()
+
         # allow ability to display live training with <spacebar> on render window
         def on_key_press(symbol, modifiers):
             if symbol == key.SPACE:
                 self.render_train = not self.render_train
+            if symbol == key.N:
+                self.render_qnet = not self.render_qnet
+
         self.env.viewer.window.push_handlers(on_key_press)
