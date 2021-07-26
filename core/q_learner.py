@@ -31,7 +31,7 @@ class QLearner:
         # logging stuff
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.PATH = f'results/{self.config.env_type}/{self.config.game}/{self.config.qnet}/{self.config.seed}/{timestamp}'
-        self.MODEL_PATH = self.PATH + 'model.params'
+        self.MODEL_PATH = self.PATH + '/model.params'
 
         self.writer = SummaryWriter(log_dir=self.PATH, max_queue=100)
         self.writer.add_text('config_info', str(self.config.__dict__))

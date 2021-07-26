@@ -51,7 +51,7 @@ class MachadoConfig:
         self.log_inside_qnet = True
         self.log_inside_qnet_freq = 10_000
         self.logging_freq = 10_000  # steps
-        self.save_param_freq = 5_000
+        self.save_param_freq = 1_000_000
 
         # REPLAY BUFFER
         self.buffer_size = 1_000_000
