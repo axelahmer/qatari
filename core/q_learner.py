@@ -1,7 +1,12 @@
 # Class outline inspired by Stanford's DQN Assignment
 
 from collections import deque
+
+import gym
+import gym3
 import numpy as np
+from procgen import ProcgenGym3Env
+
 from utils.linear_schedule import LinearSchedule
 from utils.replay_buffer import ReplayBuffer
 from gym.envs.atari.atari_env import AtariEnv
@@ -11,6 +16,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 from configs.machado import MachadoConfig
+from utils.viewer import ViewerWrapper
 
 
 class QLearner:
@@ -23,6 +29,7 @@ class QLearner:
         else:
             self.config = config
 
+        self.atari = True if self.config.env_type == 'atari' else False
         self.env = self.make_env()
         self.q_network = None
         self.render_train = True
@@ -72,7 +79,11 @@ class QLearner:
             env.seed(self.config.seed)
 
         elif self.config.env_type == 'procgen':
-            env = None
+            env = ProcgenGym3Env(num=1, env_name=self.config.game, render_mode="rgb_array")
+            env = gym3.ExtractDictObWrapper(env, key="rgb")
+            if self.config.display:
+                env = ViewerWrapper(env, info_key="rgb")
+            env = gym3.ToGymEnv(env)
         else:
             raise NotImplementedError
 
@@ -90,7 +101,7 @@ class QLearner:
         log_recent_clipped_rewards = deque(maxlen=1_000)
         log_recent_episode_scores = deque(maxlen=100)
         log_recent_episode_scores_clipped = deque(maxlen=100)
-        if self.config.terminal_on_life_loss is False:
+        if self.atari and self.config.terminal_on_life_loss is False:
             log_recent_life_scores = deque(maxlen=100)
             log_recent_life_scores_clipped = deque(maxlen=100)
 
@@ -100,7 +111,8 @@ class QLearner:
         # add key listener to render window
         if self.config.display:
             self.env.reset()
-            self.add_key_listener()
+            if self.atari:
+                self.add_key_listener()
 
             plt.ion()
             fig, ax = plt.subplots(figsize=(6, 2))
@@ -116,7 +128,7 @@ class QLearner:
             episode += 1
             episode_score = 0.
             episode_score_clipped = 0.
-            if self.config.terminal_on_life_loss is False:
+            if self.atari and self.config.terminal_on_life_loss is False:
                 life_score = 0.
                 life_score_clipped = 0.
             while True:
@@ -160,7 +172,7 @@ class QLearner:
                 episode_score += reward
                 episode_score_clipped += reward_clipped
                 log_recent_clipped_rewards.append(reward_clipped)
-                if self.config.terminal_on_life_loss is False:
+                if self.atari and self.config.terminal_on_life_loss is False:
                     life_score += reward
                     life_score_clipped += reward_clipped
                     if info['life_loss']:
@@ -178,7 +190,7 @@ class QLearner:
                     self.writer.add_scalar('avg_episode_score_clipped_(100_episodes)',
                                            np.mean(log_recent_episode_scores_clipped), t)
                     self.writer.add_scalar('avg_losses_(100_updates)', np.mean(log_recent_losses), t)
-                    if self.config.terminal_on_life_loss is False:
+                    if self.atari and self.config.terminal_on_life_loss is False:
                         self.writer.add_scalar('avg_life_score_(100_lives)', np.mean(log_recent_life_scores), t)
                         self.writer.add_scalar('avg_life_score_clipped_(100_lives)',
                                                np.mean(log_recent_life_scores_clipped), t)
@@ -188,24 +200,31 @@ class QLearner:
 
                 # update display
                 if self.config.display:
-                    self.env.viewer.window.dispatch_events()
-                    if self.render_train:
-                        # render game
-                        self.env.render()
+                    if self.atari:
+                        self.env.viewer.window.dispatch_events()
+                        if self.render_train:
+                            self.env.render()
+                            # plot running max q
+                            line_maxq.set_ydata(log_recent_max_qs)
+                            ax.relim()
+                            ax.autoscale_view()  # automatic axis scaling
+                            fig.canvas.draw_idle()
+                            fig.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
+                    if not self.atari and not self.env.env._fast_mode:
                         # plot running max q
                         line_maxq.set_ydata(log_recent_max_qs)
                         ax.relim()
                         ax.autoscale_view()  # automatic axis scaling
                         fig.canvas.draw_idle()
-                        fig.canvas.flush_events()  # update the plot and take care of window events (like resizing etc.)
+                        fig.canvas.flush_events()
 
                 # save params
                 if t % self.config.save_param_freq == 0:
                     torch.save(self.q_network.state_dict(), self.MODEL_PATH)
                     print(f'weights saved at t={t}')
 
-                # reset env if game over
-                if info['game_over']:
+                # reset env if game over (atari)
+                if self.atari and info['game_over']:
                     frame = self.env.reset()
 
                 # end episode

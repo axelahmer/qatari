@@ -11,3 +11,5 @@ class TestConfig(MachadoConfig):
         self.debug = True  # whether to print state and observation images to tensorboard
         self.display = True  # display game and max q plot
         # self.device = 'cuda:0'  # what device to do learning updates with
+
+        self.frame_history_len = 1
