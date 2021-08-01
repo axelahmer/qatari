@@ -37,7 +37,10 @@ class QLearner:
 
         # logging stuff
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.PATH = f'results/{self.config.env_type}/{self.config.game}/{self.config.qnet}/{self.config.seed}/{timestamp}'
+        if self.config.env_type == 'atari':
+            self.PATH = f'results/{self.config.env_type}/{self.config.game}/{self.config.qnet}/{self.config.seed}/{timestamp}'
+        elif self.config.env_type == 'procgen':
+            self.PATH = f'results/{self.config.env_type}/{self.config.game}/{self.config.qnet}/{timestamp}'
         self.MODEL_PATH = self.PATH + '/model.params'
 
         self.writer = SummaryWriter(log_dir=self.PATH, max_queue=100)
@@ -79,7 +82,21 @@ class QLearner:
             env.seed(self.config.seed)
 
         elif self.config.env_type == 'procgen':
-            env = ProcgenGym3Env(num=1, env_name=self.config.game, render_mode="rgb_array")
+            render_mode = "rgb_array" if self.config.display else None
+            env = ProcgenGym3Env(num=1,
+                                 render_mode=render_mode,
+                                 env_name=self.config.game,
+                                 num_levels=self.config.proc_num_levels,
+                                 start_level=self.config.proc_start_level,
+                                 paint_vel_info=self.config.proc_paint_vel_info,
+                                 use_generated_assets=self.config.use_generated_assets,
+                                 debug=self.config.proc_debug,
+                                 center_agent=self.config.proc_center_agent,
+                                 use_sequential_levels=self.config.proc_use_sequential_levels,
+                                 distribution_mode=self.config.proc_distribution_mode,
+                                 use_backgrounds=self.config.proc_use_backgrounds,
+                                 restrict_themes=self.config.proc_restrict_themes,
+                                 use_monochrome_assets=self.config.proc_use_monochrome_assets)
             env = gym3.ExtractDictObWrapper(env, key="rgb")
             if self.config.display:
                 env = ViewerWrapper(env, info_key="rgb")
